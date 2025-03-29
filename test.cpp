@@ -118,6 +118,14 @@ int main() {
         ss>>arr_type;
         ss>>arr_time;
         if(arr_type=='P'){
+          for(auto &a:cit_officers){
+                if(arr_time>=a.time_of_availability_change){
+                    int exit_time=a.time+arr_time;
+                    output.push_back(make_pair(arr_time,exit_time));
+                    a.time_of_availability_change = exit_time;
+                    flag=1;
+                    break;
+                }
             //Make a loop over officers to check time availability, how to check if all officers are unavailable and find minimum?
         }
     }
