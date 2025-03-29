@@ -3,89 +3,99 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>
 
 using namespace std;
 
 struct Officer {
-  char type;
-  int id;
-  int time;
-  int time_of_availability_change;
+    char type;
+    int id;
+    int time;
+    int time_of_availability_change;
 };
 
 int main() {
-  ifstream file("input.txt");
-  string line;
-  string start_line;
-  vector<Officer> cit_officers;
-  vector<Officer> non_cit_officers;
-  char delimiter = ' ';
+    ifstream file("input.txt");
+    string line;
 
-  if (file.is_open()) {
-    // Read each line from the file and store it in the
-    // 'line' variable.
-    
-    getline(file, line);
-    stringstream smth(line);
-    int cit_off_count, non_cit_off_count, cit_def_time, non_cit_def_time;
+    vector<Officer> cit_officers;
+    vector<Officer> non_cit_officers;
 
-    smth >> cit_off_count >> non_cit_off_count >> cit_def_time >> non_cit_def_time;
+    // Maps to hold overrides for officer times
+    map<int, int> cit_officer_times;
+    map<int, int> non_cit_officer_times;
 
-    // std::cout << "cit_off_count: " << cit_off_count << std::endl;
-    // std::cout << "non_cit_off_count: " << non_cit_off_count << std::endl;
-    // std::cout << "cit_def_time: " << cit_def_time << std::endl;
-    // std::cout << "non_cit_def_time: " << non_cit_def_time << std::endl;
+    if (file.is_open()) {
+        // First line: counts and default times
+        getline(file, line);
+        stringstream smth(line);
+        int cit_off_count, non_cit_off_count, cit_def_time, non_cit_def_time;
 
-    for(int i = 1; i <= cit_off_count; i++) {
-      Officer v;
-      v.type = 'P';
-      v.id = i;
-      v.time = cit_def_time;
-      v.time_of_availability_change = 0;
+        smth >> cit_off_count >> non_cit_off_count >> cit_def_time >> non_cit_def_time;
 
-      cit_officers.push_back(v);
+        // Pre-fill officers with default times
+        for (int i = 1; i <= cit_off_count; i++) {
+            Officer v = {'P', i, cit_def_time, 0};
+            cit_officers.push_back(v);
+        }
+
+        for (int i = 1; i <= non_cit_off_count; i++) {
+            Officer v = {'N', i, non_cit_def_time, 0};
+            non_cit_officers.push_back(v);
+        }
+
+        while (getline(file, line)) {
+            stringstream ss(line);
+            string marker;
+            char type;
+            int f_id, set_time;
+
+            if (ss >> marker >> type >> f_id >> set_time) {
+                if (marker == "T") {
+                    if (type == 'P') {
+                        cit_officer_times[f_id] = set_time;
+                    } else if (type == 'N') {
+                        non_cit_officer_times[f_id] = set_time;
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+
+        file.close();
+    } else {
+        cerr << "Unable to open file!" << endl;
+        return 1;
     }
 
-    for(int i = 1; i <= non_cit_off_count; i++) {
-      Officer v;
-      v.type = 'N';
-      v.id = i;
-      v.time = non_cit_def_time;
-      v.time_of_availability_change = 0;
-
-      non_cit_officers.push_back(v);
+    for (auto &officer : cit_officers) {
+        if (cit_officer_times.count(officer.id)) {
+            officer.time = cit_officer_times[officer.id];
+        }
     }
 
-    for (auto& a : cit_officers) {
-      cout << "Type: " << a.type << " Cit Officer id " << a.id << " time:" << a.time << " time of availability: " << a.time_of_availability_change <<endl;
+    for (auto &officer : non_cit_officers) {
+        if (non_cit_officer_times.count(officer.id)) {
+            officer.time = non_cit_officer_times[officer.id];
+        }
     }
 
-    for (auto& a : non_cit_officers) {
-      cout << "Type: " << a.type << " Cit Officer id " << a.id << " time:" << a.time << " time of availability: " << a.time_of_availability_change <<endl;
+    for (const auto& a : cit_officers) {
+        cout << "Type: " << a.type
+             << " Cit Officer id " << a.id
+             << " time: " << a.time
+             << " time of availability: " << a.time_of_availability_change
+             << endl;
     }
 
-    while (getline(file, line)) {
-      // cout << line << endl;
-
-      stringstream ss(line);
-
-      string t;
-      // Make a while loop that iterates over the officer lines in input.txt and then check it against the vectors of struct depending on the type in the input.txt and update
-
-      // while(getline(ss, t, delimiter)) {
-      //   cout << "\"" << t << "\"" << " "; 
-      // }
-
+    for (const auto& a : non_cit_officers) {
+        cout << "Type: " << a.type
+             << " Non-Cit Officer id " << a.id
+             << " time: " << a.time
+             << " time of availability: " << a.time_of_availability_change
+             << endl;
     }
 
-    // Close the file stream once all lines have been
-    // read.
-    file.close();
-  } else {
-    // Print an error message to the standard error
-    // stream if the file cannot be opened.
-    cerr << "Unable to open file!" << endl;
-  }
-
-return 0;
+    return 0;
 }
